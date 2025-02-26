@@ -1,4 +1,4 @@
-/* version Beta 2.1.1 *******************/
+/* version Beta 2.1.0 *******************/
 
 /**
  * 階乗
@@ -41,7 +41,6 @@ class StrExp{
                 currentStr2 += cSt;
             }
             if(cSt === '+' || cSt === '-' && i !== 0){
-                currentStr3 = currentStr3 ? currentStr3 : '1';
                 this[arrayIndex] = {
                     multiedNum: currentStr1, 
                     multiedStr: currentStr2,
@@ -57,6 +56,7 @@ class StrExp{
             if(cSt === '-'){
                 currentStr1 += cSt;
             }
+            currentStr3 ||= '1';
         }
         this[arrayIndex] = {
             multiedNum: currentStr1, 
@@ -69,12 +69,16 @@ class StrExp{
         this.EXP_ID = (function(){
             const ID_STR = '1234567890QWERTYUIOPASDFGHJKLZXCVBNM';
             let id = '';
-            for(let i = 0; i < 4; i++){
+            outerLoop: for(let j = 0; j < 4; j++){
                 for(let i = 0; i < 5; i++){
                     id += ID_STR.at(Math.floor(Math.random() * ID_STR.length));
+                    if(i === 4 && j === 3){
+                        break outerLoop;
+                    }
                 }
                 id += '-';
             }
+            return id;
         })();
         this.length = arrayIndex + 1;
     }
@@ -87,6 +91,12 @@ class StrExp{
             throw new TypeError(`arguments is not StrExp object`);
         }
     }
+    /**
+     * 項を取り出す
+     * @param {StrExp} objExp StrExp オブジェクト
+     * @param {number} w 取り出す項の次数
+     * @returns 取り出した項をまとめたStrExpオブジェクト
+     */
     static pickExp(objExp, w = 0){
         StrExp.#throwErrorIfInvaild(objExp);
         let powList = new StrExp('0');
@@ -100,15 +110,20 @@ class StrExp{
         }
         return powList;
     }
+    /**
+     * 式の次数を取得
+     * @param {StrExp} objExp StrExp
+     * @returns この式の次数
+     */
     static theMostExp(objExp){
         StrExp.#throwErrorIfInvaild(objExp);
         let mostPow = -Infinity;
         for(const exp of objExp){
             if(exp.pow > mostPow && exp.multiedNum !== 0){
-                mostPow = exp.pow;
+                mostPow = Number(exp.pow);
             }
         }
-        return Number(mostPow);
+        return mostPow;
     }
     static #theWorstExp(objExp){
         StrExp.#throwErrorIfInvaild(objExp);
@@ -120,12 +135,22 @@ class StrExp{
         }
         return worstPow;
     }
+    /**
+     * 符号を反転
+     * @param {StrExp} objExp StrExp
+     */
     static invert(objExp){
         StrExp.#throwErrorIfInvaild(objExp);
         for(const exp of objExp){
             exp.multiedNum = (-Number(exp.multiedNum)).toString();
         }
     }
+    /**
+     * 足し算
+     * @param {StrExp} objExp1 StrExp
+     * @param {StrExp} objExp2 StrExp
+     * @returns 足し算されたStrExp
+     */
     static positive(objExp1, objExp2){
         StrExp.#throwErrorIfInvaild(objExp1);
         StrExp.#throwErrorIfInvaild(objExp2);
@@ -163,12 +188,24 @@ class StrExp{
         }
         return new StrExp(exp);
     }
+    /**
+     * 引き算
+     * @param {StrExp} objExp1 StrExp
+     * @param {StrExp} objExp2 StrExp
+     * @returns 引き算したStrExp
+     */
     static negative(objExp1, objExp2){
         StrExp.#throwErrorIfInvaild(objExp1);
         StrExp.#throwErrorIfInvaild(objExp2);
         StrExp.invert(objExp2);
         return StrExp.positive(objExp1, objExp2);
     }
+    /**
+     * 掛け算
+     * @param {StrExp} objExp1 StrExp
+     * @param {StrExp} objExp2 StrExp
+     * @returns 掛け算したStrExp
+     */
     static multiply(objExp1, objExp2){
         StrExp.#throwErrorIfInvaild(objExp1);
         StrExp.#throwErrorIfInvaild(objExp2);
@@ -201,16 +238,23 @@ class StrExp{
         result = StrExp.positive(result, new StrExp('0'));
         return result;
     }
+    /**
+     * 割り算(Beta番)
+     * @param {StrExp} objExp1 StrExp
+     * @param {StrExp} objExp2 StrExp
+     * @returns 割り算されたStrExp
+     */
     static divide(objExp1, objExp2){
         StrExp.#throwErrorIfInvaild(objExp1);
         StrExp.#throwErrorIfInvaild(objExp2);
         if(objExp2.toString().match('0')){
             throw new Error('divided by 0');
-        } else if(StrExp.theMostExp(objExp1) < StrExp.theMostExp(objExp2)){
-            throw new RangeError('objExp2 exp is bigger than objExp1 exp');
         }
         console.log(StrExp.theMostExp(objExp1), StrExp.theMostExp(objExp2))
         const EXP1 = StrExp.theMostExp(objExp1) - StrExp.theMostExp(objExp2);
+        if(EXP1 < 0){
+            throw new RangeError('objExp2 exp is bigger than objExp1 exp');
+        }
         const MULTIED_STR = StrExp.pickExp(objExp1, 1)[0].multiedStr;
         let multiList = [], expList = [];
         const EXP2 = StrExp.#theWorstExp([...objExp1, ...objExp2]);
@@ -253,11 +297,7 @@ class StrExp{
         }
         let result = new StrExp(`0${MULTIED_STR}`);
         for(let i = 0; i < expList.length; i++){
-            try {
-                result = StrExp.positive(result, expList[i]);
-            } catch (e) {
-                throw new RangeError('objExp2 exp is bigger than objExp1 exp');
-            }
+            result = StrExp.positive(result, expList[i]);
         }
         return result;
     }
@@ -274,6 +314,12 @@ class StrExp{
         }
         return StrExp.getDeltaStack(deltaList);
     }
+    /**
+     * 代入
+     * @param {object} assignNums 代入する文字と値をまとめたオブジェクト
+     * @param {number} defaultNum 代入できなかった時のデフォルト値
+     * @returns 代入した結果
+     */
     assign(assignNums, defaultNum){
         let result = 0;
         for(const n in this){
@@ -301,7 +347,7 @@ class StrExp{
         }
         return returnStr;
     }
-    static version = 'Beta 2.1.1';
+    static version = 'Beta 2.1.0';
 }
 
 StrExp.prototype[Symbol.iterator] = [][Symbol.iterator];
