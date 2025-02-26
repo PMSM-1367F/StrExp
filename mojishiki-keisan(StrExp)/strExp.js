@@ -1,4 +1,4 @@
-/* version Beta 2.1.0 *******************/
+/* version Beta 2.1.1 *******************/
 
 /**
  * 階乗
@@ -66,6 +66,16 @@ class StrExp{
         if(this[arrayIndex].multiedStr === ''){
             this[arrayIndex].pow = '0';
         }
+        this.EXP_ID = (function(){
+            const ID_STR = '1234567890QWERTYUIOPASDFGHJKLZXCVBNM';
+            let id = '';
+            for(let i = 0; i < 4; i++){
+                for(let i = 0; i < 5; i++){
+                    id += ID_STR.at(Math.floor(Math.random() * ID_STR.length));
+                }
+                id += '-';
+            }
+        })();
         this.length = arrayIndex + 1;
     }
     static #isVaildVal(objExp){
@@ -291,7 +301,7 @@ class StrExp{
         }
         return returnStr;
     }
-    static version = 'Beta 2.1.0';
+    static version = 'Beta 2.1.1';
 }
 
 StrExp.prototype[Symbol.iterator] = [][Symbol.iterator];
