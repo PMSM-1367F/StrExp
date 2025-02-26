@@ -1,0 +1,78 @@
+・StrExp()
+new キーワードと一緒に使って新しいstrExpオブジェクトを生成。
+数学で使う文字式をそのまま引数として渡せばいい。
+ただし文字は項ごとに1つずつだけ。
+
+・SE()
+上記に同じ。StrExpの短縮形。
+
+・strExp オブジェクト
+文字式オブジェクトのこと。
+
+インスタンスプロパティ
+
+・multiedNum プロパティ
+文字式の係数。
+
+・multiedStr プロパティ
+文字式に使われている文字。
+
+・pow プロパティ
+その式の次数。
+
+インスタンスメソッド
+
+・assign メソッド
+strExpオブジェクトの文字に数字を代入して、
+その時の式の値を返す。引数は以下のようなオブジェクト。
+
+{
+    x: 1,
+    y: 2,
+    ...
+}
+
+・toString メソッド
+strExpオブジェクトを文字列に変換し、
+その文字列を返す。
+
+静的メソッド
+
+・pickExp メソッド
+strExpオブジェクトから指定された次数の項を取り出すメソッド。
+次数を設定しない場合、定数項を取り出す。
+戻り値は取り出した次数の項をまとめた文字式オブジェクト。
+
+・theMostExp メソッド
+strExpオブジェクトの次数を渡し、
+その文字式の次数を返す。
+
+・invert メソッド
+渡されたstrExpオブジェクトの符号を反転する。
+
+・positive メソッド
+strExpオブジェクトを足し算して、
+足し算の答えとなるstrExpオブジェクトを返す。
+
+・negative メソッド
+strExpオブジェクトを引き算して、
+引き算の答えとなるstrExpオブジェクトを返す。
+
+・multiply メソッド
+strExpオブジェクトを掛け算して、
+掛け算の答えとなるstrExpオブジェクトを返す。
+
+・divide メソッド
+strExpオブジェクト同士を割り算して、
+答えのstrExpオブジェクトを返す。
+
+・例外
+
+TypeError: arguments is not StrExp object
+適切な StrExp オブジェクトを引数に指定しないと発生する。
+
+TypeError: invaild String Expression
+StrExp()に適切な文字式を渡さないと発生。
+
+RangeError: objExp2 exp is bigger than objExp1 exp
+割り算の答えの次数がマイナスになるときに発生。
