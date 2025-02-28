@@ -1,4 +1,4 @@
-/* version Beta 2.1.0 *******************/
+/* version Beta 2.2.2 *******************/
 
 /**
  * 階乗
@@ -247,7 +247,7 @@ class StrExp{
     static divide(objExp1, objExp2){
         StrExp.#throwErrorIfInvaild(objExp1);
         StrExp.#throwErrorIfInvaild(objExp2);
-        if(objExp2.toString().match('0')){
+        if(objExp2.toString().match('^0')){
             throw new Error('divided by 0');
         }
         console.log(StrExp.theMostExp(objExp1), StrExp.theMostExp(objExp2))
@@ -339,7 +339,9 @@ class StrExp{
             if (str.multiedNum.match('\\-')) {
                 returnStr += str.multiedNum + str.multiedStr;
             } else {
-                returnStr += '+' + str.multiedNum + str.multiedStr;
+                returnStr += (
+                    returnStr ? '+' : ''
+                ) + str.multiedNum + str.multiedStr;
             }
             if(str.pow > 1){
                 returnStr += '^' + str.pow;
@@ -347,7 +349,7 @@ class StrExp{
         }
         return returnStr;
     }
-    static version = 'Beta 2.1.0';
+    static version = 'Beta 2.2.2';
 }
 
 StrExp.prototype[Symbol.iterator] = [][Symbol.iterator];
@@ -359,3 +361,4 @@ Object.defineProperty(String.prototype, 'canConvertStrExp', {
         return /((\-|\+)?[0-9]+([a-z]|[A-Z])*(\+|\-)?(\^[0-9])*)+/.test(this.valueOf());
     }
 });
+
