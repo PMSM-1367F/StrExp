@@ -140,6 +140,19 @@ class StrExp{
         }
         return worstPow;
     }
+    static #getDeltaStack(arr){
+        let deltaList = [];
+        for(let i = 0; i < arr.length - 1; i++){
+            deltaList[i] = arr[i + 1] - arr[i];
+        }
+        if(deltaList[0] === 0){
+            return [0];
+        }
+        if(deltaList.length <= 2){
+            return deltaList;
+        }
+        return StrExp.#getDeltaStack(deltaList);
+    }
     /**
      * 符号を反転
      * @param {StrExp} objExp StrExp
@@ -275,17 +288,18 @@ class StrExp{
             most2 = StrExp.theMostExp(objExp2)
         ){
             let numList = [];
-            for(let j = 0; j < EXP1 + 2; j++){
+            for(let j = 0; j < Math.abs(EXP1) + 2; j++){
                 numList[j] = objExp1.assign(
-                    {[MULTIED_STR]: j + 1}
+                    {[MULTIED_STR]: j + 1}, j + 1
                 ) / objExp2.assign(
-                    {[MULTIED_STR]: j + 1}
+                    {[MULTIED_STR]: j + 1}, j + 1
                 );
             }
+            console.log(numList)
             multiList[i] = (
                 i === 0 ? 
                 numList[0] : 
-                StrExp.getDeltaStack(numList)[0] / factorial(Math.abs(i))
+                StrExp.#getDeltaStack(numList)[0] / factorial(Math.abs(i))
             );
             // 0除算が行われたとき ここから
             multiList[i] = Number.isNaN(multiList[i]) ? 0 : multiList[i];
@@ -306,19 +320,6 @@ class StrExp{
         }
         return result;
     }
-    static getDeltaStack(arr){
-        let deltaList = [];
-        for(let i = 0; i < arr.length - 1; i++){
-            deltaList[i] = arr[i + 1] - arr[i];
-        }
-        if(deltaList[0] === 0){
-            return [0];
-        }
-        if(deltaList.length <= 2){
-            return deltaList;
-        }
-        return StrExp.getDeltaStack(deltaList);
-    }
     /**
      * 代入
      * @param {object} assignNums 代入する文字と値をまとめたオブジェクト
@@ -327,13 +328,10 @@ class StrExp{
      */
     assign(assignNums, defaultNum){
         let result = 0;
-        for(const n in this){
-            if(n === 'length'){
-                break;
-            }
+        for(const exp of this){
             result += (
-                Number(this[n].multiedNum) * 
-                ((assignNums[this[n].multiedStr] ?? defaultNum) ** Number(this[n].pow))
+                Number(exp.multiedNum) * 
+                ((assignNums[exp.multiedStr] ?? defaultNum) ** Number(exp.pow))
             );
         }
         return result;
@@ -355,44 +353,6 @@ class StrExp{
         return returnStr;
     }
     static version = 'Beta 2.2.2';
-    
-    /**
-     * 逆数にする
-     * @deprecated StrExp.divide()を使用してください
-     * @param {StrExp} objExp 
-     * @returns 逆数
-     */
-    static invert2(objExp){
-        StrExp.#throwErrorIfInvaild(objExp);
-        if(objExp.length !== 1){
-            return;
-        }
-        const exps = JSON.parse(JSON.stringify(objExp));
-        for(const n in exps){
-            exps[n].pow = (
-                exps[n].pow.match('\-') ? 
-                exps[n].pow.slice(1, exps[n].pow.length) : 
-                '-' + exps[n].pow
-            );
-        }
-        return exps;
-    }
-    /**
-     * @deprecated
-     * @param {StrExp} objExp1 StrExp
-     * @param {StrExp} objExp2 
-     * @returns 割られたStrExp
-     */
-    static divide1(objExp1, objExp2){
-        StrExp.#throwErrorIfInvaild(objExp1);
-        StrExp.#throwErrorIfInvaild(objExp2);
-        if(objExp2[0].multiedNum === 0){
-            return objExp1;
-        }
-        const inverted = StrExp.invert2(objExp2);
-        inverted[0].multiedNum = (1 / inverted[0].multiedNum).toString();
-        return StrExp.multiply(objExp1, inverted);
-    }
 }
 
 StrExp.prototype[Symbol.iterator] = [][Symbol.iterator];
