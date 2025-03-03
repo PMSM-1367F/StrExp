@@ -14,7 +14,7 @@ class StrExp{
      * @returns {object} StrExpオブジェクト
      */
     constructor(strExp = '0'){
-        const REG = /((\-|\+)?[0-9]+([a-z]|[A-Z])*(\+|\-)?(\^[0-9])*)+/;
+        const REG = StrExp.PATTERN;
         if(!REG.test(strExp)){
             throw new TypeError('invaild String Expression');
         }
@@ -87,6 +87,7 @@ class StrExp{
         })();
         this.length = arrayIndex + 1;
     }
+    static PATTERN = /((\-|\+)?[0-9]+([a-z]|[A-Z])*(\+|\-)?(\^[0-9])*)+/;
     static #isVaildVal(objExp){
         return objExp instanceof StrExp || objExp instanceof Array;
     }
@@ -361,7 +362,7 @@ const SE = StrExp;
 
 Object.defineProperty(String.prototype, 'canConvertStrExp', {
     value: function(){
-        return /((\-|\+)?[0-9]+([a-z]|[A-Z])*(\+|\-)?(\^[0-9])*)+/.test(this.valueOf());
+        return StrExp.PATTERN.test(this.valueOf());
     }
 });
 
