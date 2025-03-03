@@ -1,11 +1,6 @@
 /* version Beta 2.2.2 *******************/
 
-/**
- * 階乗
- * @param {number} num 数字
- * @returns 結果
- */
-function factorial(num){
+function factorial(num = 0){
     if(num === 0){
         return 1;
     }
@@ -29,18 +24,25 @@ class StrExp{
         let currentStr3 = ''; // pow
         let isGeningPow = false;
         for(let i = 0; i < strExp.length; i++){
-            const cSt = strExp.at(i);
-            if ((!Number.isNaN(Number(cSt)) || cSt === '.') && !isGeningPow) {
+            let cSt = strExp.at(i);
+            const isNum = function(val){
+                return Number.isNaN(Number(val))
+            }
+            const isSign = function(val){
+                return val === '+' || val === '-';
+            }
+            if ((!isNum(cSt) || cSt === '.') && !isGeningPow) {
                 currentStr1 += cSt;
-            } else if(cSt === '^' || isGeningPow){
+            } else if(cSt === '^' || (isGeningPow && (!currentStr3 && isSign(cSt)))){
                 !isGeningPow ? i++ : null /*何もしない*/;
-                currentStr3 += strExp.at(i);
+                cSt = strExp.at(i);
+                currentStr3 += isNum(cSt) ? '' : cSt;
                 isGeningPow = true;
-                continue;
-            } else if (!(cSt === '+' || cSt === '-')) {
+            } else if (!isSign(cSt)) {
                 currentStr2 += cSt;
             }
-            if(cSt === '+' || cSt === '-' && i !== 0){
+            if(isSign(cSt) && (i !== 0 || isGeningPow)){
+                currentStr3 ||= '1';
                 this[arrayIndex] = {
                     multiedNum: currentStr1, 
                     multiedStr: currentStr2,
@@ -56,8 +58,8 @@ class StrExp{
             if(cSt === '-'){
                 currentStr1 += cSt;
             }
-            currentStr3 ||= '1';
         }
+        currentStr3 ||= '1';
         this[arrayIndex] = {
             multiedNum: currentStr1, 
             multiedStr: currentStr2, 
@@ -66,6 +68,9 @@ class StrExp{
         if(this[arrayIndex].multiedStr === ''){
             this[arrayIndex].pow = '0';
         }
+        /**
+         * @type {string}
+         */
         this.EXP_ID = (function(){
             const ID_STR = '1234567890QWERTYUIOPASDFGHJKLZXCVBNM';
             let id = '';
@@ -343,13 +348,51 @@ class StrExp{
                     returnStr ? '+' : ''
                 ) + str.multiedNum + str.multiedStr;
             }
-            if(str.pow > 1){
+            if(str.pow > 1 || str.pow < 0){
                 returnStr += '^' + str.pow;
             }
         }
         return returnStr;
     }
     static version = 'Beta 2.2.2';
+    
+    /**
+     * 逆数にする
+     * @deprecated StrExp.divide()を使用してください
+     * @param {StrExp} objExp 
+     * @returns 逆数
+     */
+    static invert2(objExp){
+        StrExp.#throwErrorIfInvaild(objExp);
+        if(objExp.length !== 1){
+            return;
+        }
+        const exps = JSON.parse(JSON.stringify(objExp));
+        for(const n in exps){
+            exps[n].pow = (
+                exps[n].pow.match('\-') ? 
+                exps[n].pow.slice(1, exps[n].pow.length) : 
+                '-' + exps[n].pow
+            );
+        }
+        return exps;
+    }
+    /**
+     * @deprecated
+     * @param {StrExp} objExp1 StrExp
+     * @param {StrExp} objExp2 
+     * @returns 割られたStrExp
+     */
+    static divide1(objExp1, objExp2){
+        StrExp.#throwErrorIfInvaild(objExp1);
+        StrExp.#throwErrorIfInvaild(objExp2);
+        if(objExp2[0].multiedNum === 0){
+            return objExp1;
+        }
+        const inverted = StrExp.invert2(objExp2);
+        inverted[0].multiedNum = (1 / inverted[0].multiedNum).toString();
+        return StrExp.multiply(objExp1, inverted);
+    }
 }
 
 StrExp.prototype[Symbol.iterator] = [][Symbol.iterator];
