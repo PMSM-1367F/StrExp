@@ -1,4 +1,4 @@
-/* version Beta 2.2.2 *******************/
+/* version Beta 2.2.4 *******************/
 
 function factorial(num = 0){
     if(num === 0){
@@ -13,7 +13,7 @@ class StrExp{
      * @param {string} strExp 文字列で書かれた文字式
      * @returns {object} StrExpオブジェクト
      */
-    constructor(strExp = '0'){
+    constructor(strExp = '0', useBigInt = false){
         const REG = StrExp.PATTERN;
         if(!REG.test(strExp)){
             throw new TypeError('invaild String Expression');
@@ -43,13 +43,15 @@ class StrExp{
             }
             if(isSign(cSt) && (i !== 0 || isGeningPow)){
                 currentStr3 ||= '1';
+                currentStr1 = (useBigInt ? BigInt : Number)(currentStr1);
+                currentStr3 = (useBigInt ? BigInt : Number)(currentStr3);
                 this[arrayIndex] = {
                     multiedNum: currentStr1, 
                     multiedStr: currentStr2,
                     pow: currentStr3
                 }
                 if(this[arrayIndex].multiedStr === ''){
-                    this[arrayIndex].pow = '0';
+                    this[arrayIndex].pow = useBigInt ? 0n : 0;
                 }
                 arrayIndex++;
                 [currentStr1, currentStr2, currentStr3] = ['', '', ''];
@@ -60,13 +62,15 @@ class StrExp{
             }
         }
         currentStr3 ||= '1';
+        currentStr1 = (useBigInt ? BigInt : Number)(currentStr1);
+        currentStr3 = (useBigInt ? BigInt : Number)(currentStr3);
         this[arrayIndex] = {
             multiedNum: currentStr1, 
             multiedStr: currentStr2, 
             pow: currentStr3
         }
         if(this[arrayIndex].multiedStr === ''){
-            this[arrayIndex].pow = '0';
+            this[arrayIndex].pow = useBigInt ? 0n : 0;
         }
         /**
          * @type {string}
@@ -108,7 +112,7 @@ class StrExp{
         let powList = new StrExp('0');
         let i = 0;
         for(const exp of objExp){
-            if (exp.pow === w.toString()) {
+            if (exp.pow === w) {
                 powList[i] = exp;
                 powList.length = i + 1;
                 i++;
@@ -126,17 +130,17 @@ class StrExp{
         let mostPow = -Infinity;
         for(const exp of objExp){
             if(exp.pow > mostPow && exp.multiedNum !== 0){
-                mostPow = Number(exp.pow);
+                mostPow = exp.pow;
             }
         }
         return mostPow;
     }
     static #theWorstExp(objExp){
         StrExp.#throwErrorIfInvaild(objExp);
-        let worstPow = 0;
+        let worstPow = Infinity;
         for(const exp of objExp){
             if(exp.pow < worstPow && exp.multiedNum !== 0){
-                worstPow = Number(exp.pow);
+                worstPow = exp.pow;
             }
         }
         return worstPow;
@@ -161,7 +165,7 @@ class StrExp{
     static invert(objExp){
         StrExp.#throwErrorIfInvaild(objExp);
         for(const exp of objExp){
-            exp.multiedNum = (-Number(exp.multiedNum)).toString();
+            exp.multiedNum = -(exp.multiedNum);
         }
     }
     /**
@@ -186,7 +190,7 @@ class StrExp{
             const nowExp = i + worstExp;
             let result = 0;
             for(let j = 0; j < resultList[i].length; j++){
-                result += Number(resultList[i][j].multiedNum);
+                result += resultList[i][j].multiedNum;
             }
             if(result >= 0 && i !== 0){
                 exp += '+';
@@ -216,8 +220,9 @@ class StrExp{
     static negative(objExp1, objExp2){
         StrExp.#throwErrorIfInvaild(objExp1);
         StrExp.#throwErrorIfInvaild(objExp2);
-        StrExp.invert(objExp2);
-        return StrExp.positive(objExp1, objExp2);
+        const inverted = JSON.parse(JSON.stringify([...objExp2]));
+        StrExp.invert(inverted);
+        return StrExp.positive(objExp1, inverted);
     }
     /**
      * 掛け算
@@ -232,12 +237,15 @@ class StrExp{
         for(let i = 0; i < objExp1.length; i++){
             for(let j = 0; j < objExp2.length; j++){
                 const [float1, float2] = [
-                    Number(objExp1[i].multiedNum), 
-                    Number(objExp2[j].multiedNum)
+                    objExp1[i].multiedNum, 
+                    objExp2[j].multiedNum
                 ];
-                const [pow1, pow2] = [Number(objExp1[i].pow), Number(objExp2[j].pow)];
+                const [pow1, pow2] = [objExp1[i].pow, objExp2[j].pow];
                 const multiResult = float1 * float2;
                 const powResult = pow1 + pow2;
+                if(multiResult >= 0 && i !== 0){
+                    results += '+';
+                }
                 zeroOrOne2: switch(powResult){
                     case 0: {
                         results += `${multiResult}`;
@@ -275,7 +283,7 @@ class StrExp{
             throw new RangeError('objExp2 exp is bigger than objExp1 exp');
         }
         const MULTIED_STR = StrExp.pickExp(objExp1, 1)[0].multiedStr;
-        let multiList = [], expList = [];
+        let multiList = [], expStr = '';
         const EXP2 = StrExp.#theWorstExp([...objExp1, ...objExp2]);
         const EXP3 = StrExp.theMostExp([...objExp1, ...objExp2]);
         for(let i = EXP1, 
@@ -302,23 +310,23 @@ class StrExp{
                 numList[0] : 
                 StrExp.#getDeltaStack(numList)[0] / factorial(Math.abs(i))
             );
-            // 0除算が行われたとき ここから
+            // 内部的な0除算が行われたとき ここから
             multiList[i] = Number.isNaN(multiList[i]) ? 0 : multiList[i];
             // ここまで
+            if(multiList[i] >= 0 && i !== EXP1){
+                expStr += '+';
+            }
             if (i === 0) {
-                expList[i] = new StrExp(`${multiList[i]}`);
+                expStr += `${multiList[i]}`;
             } else if(i === 1){
-                expList[i] = new StrExp(`${multiList[i]}${MULTIED_STR}`);
+                expStr += `${multiList[i]}${MULTIED_STR}`;
             } else {
-                expList[i] = new StrExp(`${multiList[i]}${MULTIED_STR}^${i}`);
+                expStr += `${multiList[i]}${MULTIED_STR}^${i}`;
             }
             objExp1 = StrExp.negative(objExp1, StrExp.pickExp(objExp1, most1));
             objExp2 = StrExp.negative(objExp2, StrExp.pickExp(objExp2, most2));
         }
-        let result = new StrExp(`0${MULTIED_STR}`);
-        for(let i = 0; i < expList.length; i++){
-            result = StrExp.positive(result, expList[i]);
-        }
+        const result = new StrExp(expStr);
         return result;
     }
     /**
@@ -331,8 +339,8 @@ class StrExp{
         let result = 0;
         for(const exp of this){
             result += (
-                Number(exp.multiedNum) * 
-                ((assignNums[exp.multiedStr] ?? defaultNum) ** Number(exp.pow))
+                exp.multiedNum * 
+                ((assignNums[exp.multiedStr] ?? defaultNum) ** exp.pow)
             );
         }
         return result;
@@ -340,7 +348,7 @@ class StrExp{
     toString(){
         let returnStr = '';
         for (const str of this){
-            if (str.multiedNum.match('\\-')) {
+            if (str.multiedNum.toString().match('\\-')) {
                 returnStr += str.multiedNum + str.multiedStr;
             } else {
                 returnStr += (
@@ -353,7 +361,7 @@ class StrExp{
         }
         return returnStr;
     }
-    static version = 'Beta 2.2.2';
+    static version = 'Beta 2.2.4';
 }
 
 StrExp.prototype[Symbol.iterator] = [][Symbol.iterator];
@@ -366,3 +374,7 @@ Object.defineProperty(String.prototype, 'canConvertStrExp', {
     }
 });
 
+const {exp1, exp2} = {
+    exp1: new StrExp('4x^2-3x+1'),
+    exp2: new StrExp('2x+6')
+}
