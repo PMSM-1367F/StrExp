@@ -1,4 +1,4 @@
-/* version Beta 2.2.4 *******************/
+/* version Beta 2.2.5 *******************/
 
 function factorial(num = 0){
     if(num === 0){
@@ -41,15 +41,11 @@ class StrExp{
             } else if (!isSign(cSt)) {
                 currentStr2 += cSt;
             }
-            if(isSign(cSt) && (i !== 0 || isGeningPow)){
+            if(isSign(cSt) && (i !== 0 || isGeningPow) || i === strExp.length - 1){
                 currentStr3 ||= '1';
                 currentStr1 = (useBigInt ? BigInt : Number)(currentStr1);
                 currentStr3 = (useBigInt ? BigInt : Number)(currentStr3);
-                this[arrayIndex] = {
-                    multiedNum: currentStr1, 
-                    multiedStr: currentStr2,
-                    pow: currentStr3
-                }
+                this[arrayIndex] = new StrExp.#Exp(currentStr1, currentStr2, currentStr3);
                 if(this[arrayIndex].multiedStr === ''){
                     this[arrayIndex].pow = useBigInt ? 0n : 0;
                 }
@@ -60,17 +56,6 @@ class StrExp{
             if(cSt === '-'){
                 currentStr1 += cSt;
             }
-        }
-        currentStr3 ||= '1';
-        currentStr1 = (useBigInt ? BigInt : Number)(currentStr1);
-        currentStr3 = (useBigInt ? BigInt : Number)(currentStr3);
-        this[arrayIndex] = {
-            multiedNum: currentStr1, 
-            multiedStr: currentStr2, 
-            pow: currentStr3
-        }
-        if(this[arrayIndex].multiedStr === ''){
-            this[arrayIndex].pow = useBigInt ? 0n : 0;
         }
         /**
          * @type {string}
@@ -89,7 +74,19 @@ class StrExp{
             }
             return id;
         })();
-        this.length = arrayIndex + 1;
+        this.length = arrayIndex;
+    }
+    static #Exp = class Exp{
+        constructor(cst1, cst2, cst3){
+            this.multiedNum = cst1;
+            this.multiedStr = cst2;
+            this.pow = cst3;
+        }
+    }
+    static {
+        StrExp.#Exp.prototype[Symbol.toStringTag] = 'Exp';
+        this.prototype[Symbol.iterator] = [][Symbol.iterator];
+        this.prototype[Symbol.toStringTag] = 'StrExp';
     }
     static PATTERN = /((\-|\+)?[0-9]+([a-z]|[A-Z])*(\+|\-)?(\^[0-9])*)+/;
     static #isVaildVal(objExp){
@@ -329,6 +326,28 @@ class StrExp{
         const result = new StrExp(expStr);
         return result;
     }
+    static from(iteratable){
+        const StrExpObj = Object.create(StrExp.prototype);
+        const modifiedArray = [...iteratable];
+        for(const propName in modifiedArray){
+            StrExpObj[propName] = modifiedArray[propName]
+        }
+        StrExpObj.length = modifiedArray.length;
+        StrExpObj.EXP_ID = (function(){
+            const ID_STR = '1234567890QWERTYUIOPASDFGHJKLZXCVBNM';
+            let id = '';
+            outerLoop: for(let j = 0; j < 4; j++){
+                for(let i = 0; i < 5; i++){
+                    id += ID_STR.at(Math.floor(Math.random() * ID_STR.length));
+                    if(i === 4 && j === 3){
+                        break outerLoop;
+                    }
+                }
+                id += '-';
+            }
+            return id;
+        })();
+    }
     /**
      * 代入
      * @param {object} assignNums 代入する文字と値をまとめたオブジェクト
@@ -361,11 +380,9 @@ class StrExp{
         }
         return returnStr;
     }
-    static version = 'Beta 2.2.4';
+    static version = 'Beta 2.2.5';
 }
 
-StrExp.prototype[Symbol.iterator] = [][Symbol.iterator];
-StrExp.prototype[Symbol.toStringTag] = 'StrExp';
 const SE = StrExp;
 
 Object.defineProperty(String.prototype, 'canConvertStrExp', {
@@ -373,8 +390,3 @@ Object.defineProperty(String.prototype, 'canConvertStrExp', {
         return StrExp.PATTERN.test(this.valueOf());
     }
 });
-
-const {exp1, exp2} = {
-    exp1: new StrExp('4x^2-3x+1'),
-    exp2: new StrExp('2x+6')
-}
